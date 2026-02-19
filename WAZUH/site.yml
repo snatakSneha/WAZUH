@@ -1,0 +1,11 @@
+---
+
+- name: Install Wazuh Stack
+
+  hosts: all
+
+  become: true
+
+  roles:
+
+    - wazuh

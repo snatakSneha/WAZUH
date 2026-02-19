@@ -1,0 +1,15 @@
+---
+
+galaxy_info:
+
+  author: Sneha
+
+  description: Wazuh Role
+
+  min_ansible_version: 2.15
+
+  platforms:
+
+    - name: Ubuntu
+    - name: EL
+    - name: Amazon

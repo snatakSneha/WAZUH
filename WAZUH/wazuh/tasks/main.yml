@@ -1,0 +1,24 @@
+---
+
+- name: Setup repo
+  ansible.builtin.include_tasks: repo.yml
+
+
+- name: Install manager
+  ansible.builtin.include_tasks: install_manager.yml
+  when: wazuh_install_manager
+
+
+- name: Install indexer
+  ansible.builtin.include_tasks: install_indexer.yml
+  when: wazuh_install_indexer
+
+
+- name: Install dashboard
+  ansible.builtin.include_tasks: install_dashboard.yml
+  when: wazuh_install_dashboard
+
+
+- name: Install agent
+  ansible.builtin.include_tasks: install_agent.yml
+  when: wazuh_install_agent

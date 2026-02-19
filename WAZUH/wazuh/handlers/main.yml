@@ -1,0 +1,24 @@
+---
+
+- name: Restart Wazuh Agent
+  ansible.builtin.systemd:
+    name: "{{ wazuh_agent_service }}"
+    state: restarted
+
+
+- name: Restart Wazuh Manager
+  ansible.builtin.systemd:
+    name: "{{ wazuh_manager_service }}"
+    state: restarted
+
+
+- name: Restart Wazuh Indexer
+  ansible.builtin.systemd:
+    name: "{{ wazuh_indexer_service }}"
+    state: restarted
+
+
+- name: Restart Wazuh Dashboard
+  ansible.builtin.systemd:
+    name: "{{ wazuh_dashboard_service }}"
+    state: restarted

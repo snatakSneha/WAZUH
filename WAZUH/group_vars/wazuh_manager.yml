@@ -1,0 +1,4 @@
+wazuh_install_manager: true
+wazuh_install_indexer: false
+wazuh_install_dashboard: false
+wazuh_install_agent: false

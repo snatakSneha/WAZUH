@@ -1,0 +1,16 @@
+---
+
+- name: Ensure correct Wazuh Manager version is installed
+  ansible.builtin.apt:
+    name: "{{ wazuh_manager_package }}"
+    state: present
+    update_cache: true
+    allow_downgrade: true
+
+
+- name: Ensure Wazuh Manager service is enabled and started
+  ansible.builtin.systemd:
+    name: "{{ wazuh_manager_service }}"
+    enabled: true
+    state: started
+    daemon_reload: true

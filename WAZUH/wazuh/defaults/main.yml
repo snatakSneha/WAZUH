@@ -1,0 +1,28 @@
+---
+
+
+wazuh_version: "4.7.5-1"
+
+wazuh_manager_package: "wazuh-manager={{ wazuh_version }}"
+wazuh_indexer_package: "wazuh-indexer={{ wazuh_version }}"
+wazuh_dashboard_package: "wazuh-dashboard={{ wazuh_version }}"
+wazuh_agent_package: "wazuh-agent={{ wazuh_version }}"
+
+wazuh_manager_service: wazuh-manager
+wazuh_indexer_service: wazuh-indexer
+wazuh_dashboard_service: wazuh-dashboard
+wazuh_agent_service: wazuh-agent
+
+
+wazuh_install_manager: false
+wazuh_install_indexer: false
+wazuh_install_dashboard: false
+wazuh_install_agent: false
+
+
+wazuh_repo_base_url: "https://packages.wazuh.com/{{ wazuh_version.split('.')[0] }}.x"
+
+
+wazuh_manager_host: "127.0.0.1"
+
+wazuh_agent_group: default

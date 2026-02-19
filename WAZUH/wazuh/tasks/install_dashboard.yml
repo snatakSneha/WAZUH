@@ -1,0 +1,16 @@
+---
+
+- name: Ensure correct Wazuh Dashboard version is installed
+  ansible.builtin.apt:
+    name: "{{ wazuh_dashboard_package }}"
+    state: present
+    update_cache: true
+    allow_downgrade: true
+
+
+- name: Ensure Wazuh Dashboard service is enabled and started
+  ansible.builtin.systemd:
+    name: "{{ wazuh_dashboard_service }}"
+    enabled: true
+    state: started
+    daemon_reload: true

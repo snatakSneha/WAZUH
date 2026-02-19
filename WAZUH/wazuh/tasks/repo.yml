@@ -1,0 +1,76 @@
+---
+
+# Install dependencies
+
+- name: Install repo dependencies
+  ansible.builtin.package:
+    name:
+      - curl
+      - gnupg
+      - ca-certificates
+    state: present
+
+
+# Debian / Ubuntu repo setup
+
+- name: Setup Wazuh repo (Debian family)
+  block:
+
+    - name: Download GPG key
+      ansible.builtin.get_url:
+        url: https://packages.wazuh.com/key/GPG-KEY-WAZUH
+        dest: /usr/share/keyrings/wazuh.asc
+        mode: '0644'
+
+
+    - name: Convert key to gpg format
+      ansible.builtin.command:
+        cmd: gpg --dearmor /usr/share/keyrings/wazuh.asc
+      args:
+        creates: /usr/share/keyrings/wazuh.asc.gpg
+
+
+    - name: Rename key
+      ansible.builtin.copy:
+        src: /usr/share/keyrings/wazuh.asc.gpg
+        dest: /usr/share/keyrings/wazuh.gpg
+        remote_src: yes
+        mode: '0644'
+
+
+    - name: Add repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt stable main"
+        filename: wazuh
+        state: present
+
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+
+  when: ansible_pkg_mgr == "apt"
+
+# RedHat / Amazon Linux repo setup
+
+- name: Setup Wazuh repo (RedHat family)
+  block:
+
+    - name: Import key
+      ansible.builtin.rpm_key:
+        key: https://packages.wazuh.com/key/GPG-KEY-WAZUH
+        state: present
+
+
+    - name: Add repo
+      ansible.builtin.yum_repository:
+        name: wazuh
+        description: Wazuh repo
+        baseurl: https://packages.wazuh.com/4.x/yum/
+        enabled: yes
+        gpgcheck: yes
+        gpgkey: https://packages.wazuh.com/key/GPG-KEY-WAZUH
+
+
+  when: ansible_pkg_mgr in ["yum", "dnf"]

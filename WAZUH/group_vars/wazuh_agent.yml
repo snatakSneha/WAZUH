@@ -1,0 +1,6 @@
+wazuh_install_manager: false
+wazuh_install_indexer: false
+wazuh_install_dashboard: false
+wazuh_install_agent: true
+
+wazuh_manager_host: 13.201.121.21

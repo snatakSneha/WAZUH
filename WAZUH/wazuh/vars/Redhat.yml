@@ -1,0 +1,9 @@
+---
+
+wazuh_repo:
+
+  name: wazuh
+
+  baseurl: "{{ wazuh_repo_base_url }}/yum"
+
+  gpgkey: "{{ wazuh_repo_base_url }}/yum/GPG-KEY-WAZUH"

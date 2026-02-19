@@ -1,0 +1,9 @@
+---
+
+wazuh_repo:
+
+  name: wazuh
+
+  baseurl: "{{ wazuh_repo_base_url }}/apt"
+
+  gpgkey: "{{ wazuh_repo_base_url }}/apt/wazuh.gpg"

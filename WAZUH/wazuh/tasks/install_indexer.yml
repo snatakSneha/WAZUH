@@ -1,0 +1,182 @@
+---
+# Install Wazuh Indexer
+
+- name: Install Wazuh Indexer package
+  ansible.builtin.apt:
+    name: "{{ wazuh_indexer_package }}"
+    state: present
+    update_cache: true
+    allow_downgrade: true
+
+- name: Configure vm.max_map_count for Indexer
+  ansible.builtin.sysctl:
+    name: vm.max_map_count
+    value: "262144"
+    state: present
+    reload: true
+
+- name: Create temp certs working directory
+  ansible.builtin.file:
+    path: /tmp/wazuh-certs-gen
+    state: directory
+    mode: "0700"
+
+- name: Remove stale admin certs to force regeneration
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/wazuh-certs-gen/admin-key.pem
+    - /tmp/wazuh-certs-gen/admin.csr
+    - /tmp/wazuh-certs-gen/admin.pem
+    - /etc/wazuh-indexer/certs/admin.pem
+    - /etc/wazuh-indexer/certs/admin-key.pem
+
+- name: Generate root CA key
+  ansible.builtin.command:
+    cmd: openssl genrsa -out /tmp/wazuh-certs-gen/root-ca-key.pem 2048
+    creates: /tmp/wazuh-certs-gen/root-ca-key.pem
+
+- name: Generate root CA certificate
+  ansible.builtin.command:
+    cmd: >-
+      openssl req -new -x509 -sha256 -days 3650
+      -subj "/C=US/O=Wazuh/CN=Wazuh Root CA"
+      -key /tmp/wazuh-certs-gen/root-ca-key.pem
+      -out /tmp/wazuh-certs-gen/root-ca.pem
+    creates: /tmp/wazuh-certs-gen/root-ca.pem
+
+- name: Generate indexer key
+  ansible.builtin.command:
+    cmd: openssl genrsa -out /tmp/wazuh-certs-gen/node-1-key.pem 2048
+    creates: /tmp/wazuh-certs-gen/node-1-key.pem
+
+- name: Generate indexer CSR
+  ansible.builtin.command:
+    cmd: >-
+      openssl req -new -sha256
+      -subj "/C=US/O=Wazuh/CN=node-1"
+      -key /tmp/wazuh-certs-gen/node-1-key.pem
+      -out /tmp/wazuh-certs-gen/node-1.csr
+    creates: /tmp/wazuh-certs-gen/node-1.csr
+
+- name: Sign indexer certificate with root CA
+  ansible.builtin.command:
+    cmd: >-
+      openssl x509 -req -days 3650 -sha256
+      -CA /tmp/wazuh-certs-gen/root-ca.pem
+      -CAkey /tmp/wazuh-certs-gen/root-ca-key.pem
+      -CAcreateserial
+      -in /tmp/wazuh-certs-gen/node-1.csr
+      -out /tmp/wazuh-certs-gen/node-1.pem
+    creates: /tmp/wazuh-certs-gen/node-1.pem
+
+- name: Generate admin key
+  ansible.builtin.command:
+    cmd: openssl genrsa -out /tmp/wazuh-certs-gen/admin-key.pem 2048
+    creates: /tmp/wazuh-certs-gen/admin-key.pem
+
+- name: Generate admin CSR
+  ansible.builtin.command:
+    cmd: >-
+      openssl req -new -sha256
+      -subj "/C=US/ST=California/L=California/O=Wazuh/OU=Wazuh/CN=admin"
+      -key /tmp/wazuh-certs-gen/admin-key.pem
+      -out /tmp/wazuh-certs-gen/admin.csr
+    creates: /tmp/wazuh-certs-gen/admin.csr
+
+- name: Sign admin certificate with root CA
+  ansible.builtin.command:
+    cmd: >-
+      openssl x509 -req -days 3650 -sha256
+      -CA /tmp/wazuh-certs-gen/root-ca.pem
+      -CAkey /tmp/wazuh-certs-gen/root-ca-key.pem
+      -CAcreateserial
+      -in /tmp/wazuh-certs-gen/admin.csr
+      -out /tmp/wazuh-certs-gen/admin.pem
+    creates: /tmp/wazuh-certs-gen/admin.pem
+
+- name: Create certs directory
+  ansible.builtin.file:
+    path: /etc/wazuh-indexer/certs
+    state: directory
+    owner: wazuh-indexer
+    group: wazuh-indexer
+    mode: "0500"
+
+- name: Copy indexer cert
+  ansible.builtin.copy:
+    src: /tmp/wazuh-certs-gen/node-1.pem
+    dest: /etc/wazuh-indexer/certs/indexer.pem
+    remote_src: true
+    owner: wazuh-indexer
+    group: wazuh-indexer
+    mode: "0400"
+
+- name: Copy indexer key
+  ansible.builtin.copy:
+    src: /tmp/wazuh-certs-gen/node-1-key.pem
+    dest: /etc/wazuh-indexer/certs/indexer-key.pem
+    remote_src: true
+    owner: wazuh-indexer
+    group: wazuh-indexer
+    mode: "0400"
+
+- name: Copy root CA cert
+  ansible.builtin.copy:
+    src: /tmp/wazuh-certs-gen/root-ca.pem
+    dest: /etc/wazuh-indexer/certs/root-ca.pem
+    remote_src: true
+    owner: wazuh-indexer
+    group: wazuh-indexer
+    mode: "0400"
+
+- name: Copy admin cert
+  ansible.builtin.copy:
+    src: /tmp/wazuh-certs-gen/admin.pem
+    dest: /etc/wazuh-indexer/certs/admin.pem
+    remote_src: true
+    owner: wazuh-indexer
+    group: wazuh-indexer
+    mode: "0400"
+
+- name: Copy admin key
+  ansible.builtin.copy:
+    src: /tmp/wazuh-certs-gen/admin-key.pem
+    dest: /etc/wazuh-indexer/certs/admin-key.pem
+    remote_src: true
+    owner: wazuh-indexer
+    group: wazuh-indexer
+    mode: "0400"
+
+- name: Deploy opensearch.yml configuration
+  ansible.builtin.template:
+    src: opensearch.yml.j2
+    dest: /etc/wazuh-indexer/opensearch.yml
+    owner: root
+    group: wazuh-indexer
+    mode: "0660"
+
+- name: Start and enable Wazuh Indexer service
+  ansible.builtin.systemd:
+    name: "{{ wazuh_indexer_service }}"
+    enabled: true
+    state: started
+
+- name: Initialize Wazuh Indexer security
+  ansible.builtin.command:
+    cmd: /usr/share/wazuh-indexer/bin/indexer-security-init.sh
+    creates: /etc/wazuh-indexer/.security-initialized
+
+- name: Create security initialized marker
+  ansible.builtin.file:
+    path: /etc/wazuh-indexer/.security-initialized
+    state: touch
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Restart Wazuh Indexer service
+  ansible.builtin.systemd:
+    name: "{{ wazuh_indexer_service }}"
+    state: restarted

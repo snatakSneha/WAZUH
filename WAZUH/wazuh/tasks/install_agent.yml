@@ -1,0 +1,27 @@
+---
+# Install Wazuh Agent
+
+- name: Remove broken wazuh-manager if exists
+  ansible.builtin.command: dpkg --remove --force-remove-reinstreq wazuh-manager
+  ignore_errors: true
+
+- name: Install Wazuh Agent package
+  ansible.builtin.apt:
+    name: "{{ wazuh_agent_package }}"
+    state: present
+    update_cache: true
+    allow_downgrade: true
+
+- name: Configure Wazuh Agent
+  ansible.builtin.template:
+    src: agent.conf.j2
+    dest: /var/ossec/etc/ossec.conf
+    owner: root
+    group: wazuh
+    mode: "0640"
+
+- name: Start and enable Wazuh Agent service
+  ansible.builtin.systemd:
+    name: "{{ wazuh_agent_service }}"
+    enabled: true
+    state: started
